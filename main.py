@@ -23,7 +23,7 @@ st.set_page_config(layout="wide")
 
 def main():
     st.subheader(f'1. TSMOM result')
-    start = '2016-01-01'
+    start = '2017-01-01'
     # end = '2022-12-05'
     now = datetime.datetime.now()
     end = now.strftime("%Y-%m-%d")
@@ -44,7 +44,7 @@ def main():
     df['Date'] = pd.to_datetime(df['Date'])
     df.set_index('Date',inplace=True)
 
-
+    index = index.loc[df.index[0]:]
 
     fig = px.line(df,title=f"{symbol} stock price")
     fig.update_layout(
@@ -57,10 +57,11 @@ def main():
 
 
     TSMOM_df = pd.DataFrame(columns=['Buy and Hold','TSMOM without vol target','TSMOM with vol target','VNINDEX'])
-    long_only = ((1 + stock.pct_return).cumprod() - 1)
-    TSMOM_df['Buy and Hold'] = long_only
-    vnindex = ((1 + index.pct_return).cumprod() - 1)
-    TSMOM_df['VNINDEX'] = vnindex
+    return_df = pd.DataFrame(columns=['Buy and Hold', 'TSMOM without vol target', 'TSMOM with vol target', 'VNINDEX'])
+    return_df['Buy and Hold'] = stock.pct_return
+    return_df['VNINDEX'] = index.pct_return
+
+
     TSMOM = TSMOM_strategy(df, VOL_LOOKBACK, VOL_TARGET, volatility_scaling=False)
     trend = TSMOM.trend_estimation(TS_LENGTH)
     signal = TSMOM.position_sizing(trend, activation='sign')
@@ -68,9 +69,7 @@ def main():
     returns.rename(columns={'close': 'returns'}, inplace=True)
     my_rets = returns.dropna()
     my_rets.rename(columns={'returns': 'captured_returns'}, inplace=True)
-    my_rets['cum_returns'] = (1 + my_rets.captured_returns).cumprod() - 1
-    TSMOM_df['TSMOM without vol target'] = my_rets['cum_returns']
-
+    return_df['TSMOM without vol target'] =my_rets.captured_returns
 
     TSMOM = TSMOM_strategy(df, VOL_LOOKBACK, VOL_TARGET, volatility_scaling=True)
     returns1 = TSMOM.cal_strategy_returns(signal)
@@ -78,8 +77,15 @@ def main():
     vol_target_map = TSMOM.volatility_target_map()
     my_rets1 = returns1.dropna()
     my_rets1.rename(columns={'returns': 'captured_returns'}, inplace=True)
-    my_rets1['cum_returns'] = (1 + my_rets1.captured_returns).cumprod() - 1
-    TSMOM_df['TSMOM with vol target'] = my_rets1['cum_returns']
+    return_df['TSMOM with vol target'] =my_rets1.captured_returns
+    return_df.iloc[0,:]=0
+    return_df.dropna(inplace=True)
+
+    TSMOM_df['Buy and Hold'] = ((1 + return_df['Buy and Hold']).cumprod() - 1)
+    TSMOM_df['VNINDEX'] = ((1 + return_df['VNINDEX']).cumprod() - 1)
+    TSMOM_df['TSMOM with vol target'] = ((1 + return_df['TSMOM with vol target']).cumprod() - 1)
+    TSMOM_df['TSMOM without vol target'] = ((1 + return_df['TSMOM without vol target']).cumprod() - 1)
+
     fig = px.line(TSMOM_df,title="Cumulative return comparison")
     fig.update_layout(
         autosize=False,
@@ -159,7 +165,7 @@ def main():
 
     sharpe_df = pd.concat((sharpe_df_TSMOM_vol_target, sharpe_df_TSMOM_no_vol_target))
     sharpe_df = pd.concat((sharpe_df, sharpe_df_long_only))
-
+    sharpe_df.dropna(inplace=True,axis=1)
     st.table(sharpe_df.T)
     st.write('### Daily return distribution')
     st.table(stats)
