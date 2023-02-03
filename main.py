@@ -295,7 +295,8 @@ def methodology():
     (i) measuring momentum, essentially by smoothing out recent returns to obtain a signal that is not too rapidly-varying, and 
     (ii) having a law that turns this signal into a trading position, i.e. how may contracts or what notional to have on.
     
-    However, the strategy is not a magical and applicable to all of the asset (or stock in this case in Vietnam).
+    One of the advantage of this strategy is that, with an appropriate stock and parameters, we can achieve higher annual return
+    and lower annual volatility. However, the strategy is not a magical tools and not all stocks achieve the same result.
     Hence, choosing the right stock and the right paremeter is crucial for a successful momentum strategy.''')
 
 
