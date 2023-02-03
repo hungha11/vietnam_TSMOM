@@ -27,16 +27,25 @@ def main():
     # end = '2022-12-05'
     now = datetime.datetime.now()
     end = now.strftime("%Y-%m-%d")
-    stock = load_stock_data(symbol,start,end)
-    stock.index = pd.to_datetime(stock.index)
-    index = load_index_data('VNINDEX',start,end)
-    index.index = pd.to_datetime(index.index)
+    @st.cache
+    def data_stock():
+        stock = load_stock_data(symbol,start,end)
+        stock.index = pd.to_datetime(stock.index)
+        index = load_index_data('VNINDEX', start, end)
+        index.index = pd.to_datetime(index.index)
+        return stock,index
+    stock,index = data_stock()
+    # index = load_index_data('VNINDEX',start,end)
+    # index.index = pd.to_datetime(index.index)
 
     df = pd.DataFrame(stock['close'].copy())
     df.reset_index(inplace=True)
     df.rename(columns={"tradingDate":'Date'},inplace=True)
     df['Date'] = pd.to_datetime(df['Date'])
     df.set_index('Date',inplace=True)
+
+
+
     fig = px.line(df,title=f"{symbol} stock price")
     fig.update_layout(
         autosize=False,
@@ -47,10 +56,11 @@ def main():
     st.plotly_chart(fig,use_container_width=True)
 
 
-    TSMOM_df = pd.DataFrame(columns=['Buy and Hold','TSMOM without vol target','TSMOM with vol target'])
+    TSMOM_df = pd.DataFrame(columns=['Buy and Hold','TSMOM without vol target','TSMOM with vol target','VNINDEX'])
     long_only = ((1 + stock.pct_return).cumprod() - 1)
     TSMOM_df['Buy and Hold'] = long_only
-
+    vnindex = ((1 + index.pct_return).cumprod() - 1)
+    TSMOM_df['VNINDEX'] = vnindex
     TSMOM = TSMOM_strategy(df, VOL_LOOKBACK, VOL_TARGET, volatility_scaling=False)
     trend = TSMOM.trend_estimation(TS_LENGTH)
     signal = TSMOM.position_sizing(trend, activation='sign')
@@ -315,10 +325,10 @@ if __name__ =='__main__':
     - Trend estimation will use the cumulative return in an determined period
     - Position sizing: will use sign signal (however, we can short in Vietnam, we will skip the -1 signal)
     ''')
-
+    symbol = st.text_input('Enter stock symbol:').upper()
 
     with st.sidebar:
-        symbol = st.text_input('Enter stock symbol:').upper()
+        # symbol = st.text_input('Enter stock symbol:').upper()
         TS_LENGTH = st.number_input('Look back for TSMOM:', min_value=0, value=21)
         VOL_LOOKBACK = st.number_input('Look back for volatility target:', min_value=0, value=60)
         VOL_TARGET = st.number_input('Volatility target:', min_value=0.00, value=0.35)
