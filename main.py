@@ -23,7 +23,7 @@ st.set_page_config(layout="wide")
 
 def main():
     st.subheader(f'1. TSMOM result')
-    start = '2017-01-01'
+    start = '2018-01-01'
     # end = '2022-12-05'
     now = datetime.datetime.now()
     end = now.strftime("%Y-%m-%d")
@@ -98,8 +98,8 @@ def main():
 
     # fig = go.Figure()
     signal.rename(columns={'close':'signal'},inplace=True)
-    signal = signal[-500:]
-    fig = px.line(signal,title='500 days signal for TSMOM')
+    signal = signal[-250:]
+    fig = px.line(signal,title='250 days signal for TSMOM')
     # Set title
     fig.update_layout(
         autosize=False,
@@ -331,6 +331,8 @@ if __name__ =='__main__':
     - Trend estimation will use the cumulative return in an determined period
     - Position sizing: will use sign signal (however, we can short in Vietnam, we will skip the -1 signal)
     ''')
+    expander.write("""
+    Note: **The model will fixed the start date at 2018-01-01 due to lack of data before that period. End date will be today.**""")
     symbol = st.text_input('Enter stock symbol:').upper()
 
     with st.sidebar:
