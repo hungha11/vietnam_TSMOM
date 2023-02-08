@@ -1,13 +1,9 @@
-import pandas as pd
 import datetime
-import time
 import numpy as np
 import scipy
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-import seaborn as sns
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
@@ -355,7 +351,7 @@ if __name__ =='__main__':
 
     if symbol and isValidSymbol: #symbol true
         main()
-    if not isValidSymbol:
+    if symbol and not isValidSymbol:
         st.write('## Invalid Stock')
     else:
         st.write('## Please choose a stock')
